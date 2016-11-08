@@ -1,0 +1,5 @@
+IN
+ADD three
+OUT
+DAT three 003
+
