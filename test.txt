@@ -1,5 +1,6 @@
 IN
 ADD three
 OUT
+HLT
 DAT three 003
 

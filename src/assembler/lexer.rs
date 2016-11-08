@@ -3,6 +3,7 @@ pub struct SrcLine<'a> {
   pub op: &'a str,
   pub operand: Option<&'a str>,
   pub label: Option<&'a str>,
+  pub lnum: u32,
 }
 
 pub struct TokenList<'a> {
@@ -24,7 +25,7 @@ fn check_if_op(l: &str) -> bool {
 
 /// Lex a single line of ASM.
 #[inline(always)]
-fn lex_line(line: &str) -> Result<SrcLine, &str> {
+fn lex_line(line: &str, lnum: u32) -> Result<SrcLine, &str> {
   let lexemes: Vec<&str> = line.split_whitespace().collect();
   let mut src_line : SrcLine; 
   if lexemes.len() == 0 {
@@ -34,7 +35,7 @@ fn lex_line(line: &str) -> Result<SrcLine, &str> {
     return Err("Unexpected symbols before EOL.");
   }
 
-  src_line = SrcLine{op: "", operand: None, label: None};
+  src_line = SrcLine{op: "", operand: None, label: None, lnum: lnum};
   if check_if_op(lexemes[0]) { // Standard op, no label
     src_line.op = lexemes[0];
     if lexemes.len() == 2 {
@@ -73,7 +74,7 @@ pub fn lex(source: &str) -> Result<TokenList, String> {
   for line in source.lines() {
     line_num += 1;
     if line.trim() == "" { continue; }
-    line_lex_res = lex_line(line);
+    line_lex_res = lex_line(line, line_num);
     if !line_lex_res.is_ok() {
       return Err(line_lex_res.err().unwrap_or("Unknown error.").to_string()
                  + " LINE "
