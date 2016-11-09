@@ -57,13 +57,21 @@ impl LMC {
         self.mar = self.operand;
         self.fetch();
         self.acc += self.mdr;
+        if self.acc > 999 {
+          self.acc = self.acc % 1000;
+        }
       }
 
       // SUB
       2 => {
         self.mar = self.operand;
         self.fetch();
-        self.acc += self.mdr;
+        if self.acc < self.mdr {
+          self.neg = true;
+        }
+        else {
+          self.acc -= self.mdr;
+        }
       }
 
       // STO
@@ -78,6 +86,7 @@ impl LMC {
         self.mar = self.operand;
         self.fetch();
         self.acc = self.mdr;
+        self.neg = false;
       }
 
       // BRANCH
@@ -94,7 +103,7 @@ impl LMC {
 
       // BRANCH ON POSITIVE
       8 => {
-        if self.neg {
+        if !self.neg {
           self.pc = self.operand;
         }
       }

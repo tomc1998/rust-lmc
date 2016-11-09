@@ -56,9 +56,14 @@ fn op_pass(token_list: &lexer::TokenList, labels: &Vec<Label>) -> Result<Vec<Ope
       },
       "DAT" => {
         if t.operand.is_some() {
-          let operand_res = t.operand.unwrap().parse::<u8>();
+          let operand_str = t.operand.unwrap().trim();
+          let operand_res = operand_str.parse::<u16>();
           if operand_res.is_ok() {
             curr_op.operand = operand_res.ok().unwrap() as u16;
+            if curr_op.operand > 999 {
+              curr_op.operand = 999;
+              return Err("DAT value too large at line ".to_string() + &(t.lnum.to_string()));
+            }
           }
           else {
             return Err("Err parsing DAT value at line ".to_string() + &(t.lnum.to_string()));

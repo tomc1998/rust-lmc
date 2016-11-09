@@ -25,11 +25,13 @@ fn check_if_op(l: &str) -> bool {
 
 /// Lex a single line of ASM.
 #[inline(always)]
-fn lex_line(line: &str, lnum: u32) -> Result<SrcLine, &str> {
-  let lexemes: Vec<&str> = line.split_whitespace().collect();
+fn lex_line(line: &str, lnum: u32) -> Result<Option<SrcLine>, &str> {
+  let comment_split: Vec<&str> = line.split("#").collect();
+  let non_comment: &str = comment_split[0];
+  let lexemes: Vec<&str> = non_comment.split_whitespace().collect();
   let mut src_line : SrcLine; 
   if lexemes.len() == 0 {
-    return Err("Assembler error, parsing empty line.");
+    return Ok(None);
   }
   if lexemes.len() > 3 {
     return Err("Unexpected symbols before EOL.");
@@ -42,33 +44,30 @@ fn lex_line(line: &str, lnum: u32) -> Result<SrcLine, &str> {
       src_line.operand = Some(lexemes[1]);
     }
   }
-  else { // Either a DAT op or label first
+  else { // Label first
     if lexemes.len() == 1 {
       return Err("Premature EOL.");
     }
-    else if lexemes[0] == "DAT" { // DAT
-      src_line.op = lexemes[0];
-      src_line.label = Some(lexemes[1]);
-    }
     else { // Label first then op
-      if !check_if_op(lexemes[1]) {
+      if !check_if_op(lexemes[1]) && lexemes[1] != "DAT" {
         return Err("Bad OP code");
       }
       src_line.label = Some(lexemes[0]);
       src_line.op = lexemes[1];
-    }
-    // Operand will always be index 2 if DAT or label
-    if lexemes.len() == 3 {
-      src_line.operand = Some(lexemes[2]);
+      // Operand will always be index 2 if DAT or label
+      if lexemes.len() == 3 {
+        src_line.operand = Some(lexemes[2]);
+      }
     }
   }
-  return Ok(src_line);
+  return Ok(Some(src_line));
 }
 
 /// Parses a source file, returns a list of tokens
 pub fn lex(source: &str) -> Result<TokenList, String> {
   let mut token_list = TokenList{tokens: Vec::new()};
-  let mut line_lex_res : Result<SrcLine, &str>;
+  let mut line_lex_res : Result<Option<SrcLine>, &str>;
+  let mut token : Option<SrcLine>;
   let mut line_num = 0u32;
 
   for line in source.lines() {
@@ -81,7 +80,11 @@ pub fn lex(source: &str) -> Result<TokenList, String> {
                  + &(line_num.to_string())
       );
     }
-    token_list.tokens.push(line_lex_res.ok().unwrap());
+
+    token = line_lex_res.ok().unwrap();
+    if token.is_some() {
+      token_list.tokens.push(token.unwrap());
+    }
   }
   return Ok(token_list);
 }

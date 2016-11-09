@@ -25,5 +25,11 @@ pub fn assemble(src: &str, lmc: &mut lmc::LMC) -> bool {
   operations = operations_res.ok().unwrap();
 
   code_gen::gen(&operations, lmc);
+
+  for i in lmc.mem.iter() {
+    print!("{}, ", i);
+  }
+  println!("");
+
   return true;
 }
